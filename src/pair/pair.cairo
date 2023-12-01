@@ -1,5 +1,7 @@
 trait PairInternalTrait<TContractState> {
-    fn _update(ref self: TContractState, balance0: u128, balance1: u128, reserve0: u128, reserve1: u128);
+    fn _update(
+        ref self: TContractState, balance0: u128, balance1: u128, reserve0: u128, reserve1: u128
+    );
     fn _mint_fee(ref self: TContractState, reserve0: u128, reserve1: u128) -> bool;
 }
 
@@ -19,13 +21,16 @@ mod Pair {
     use unicairo_v2::reentrancy_guard::reentrancy_guard::reentrancy_guard as reentrancy_guard_component;
 
     component!(path: erc20_component, storage: erc20, event: ERC20Event);
-    component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvent);
+    component!(
+        path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvent
+    );
 
     #[abi(embed_v0)]
     impl ERC20 = erc20_component::ERC20Impl<ContractState>;
 
     impl ERC20Internal = erc20_component::ERC20InternalImpl<ContractState>;
-    impl ReentrancyGuardInternal = reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
+    impl ReentrancyGuardInternal =
+        reentrancy_guard_component::ReentrancyGuardInternalImpl<ContractState>;
 
     const MINIMUM_LIQUIDITY: u256 = 10_000;
 
@@ -118,17 +123,25 @@ mod Pair {
     }
 
     impl PairInternalImpl of super::PairInternalTrait<ContractState> {
-        fn _update(ref self: ContractState, balance0: u128, balance1: u128, reserve0: u128, reserve1: u128) {
+        fn _update(
+            ref self: ContractState, balance0: u128, balance1: u128, reserve0: u128, reserve1: u128
+        ) {
             let timestamp = get_block_timestamp();
             let time_elapsed = timestamp - self._block_timestamp_last.read();
 
             if time_elapsed > 0 && reserve0 != 0 && reserve1 != 0 {
-                self._price0_cumulative_last.write(
-                    self._price0_cumulative_last.read() + _uq_div(_uq_encode(reserve1), reserve0).into() * time_elapsed.into()
-                );
-                self._price1_cumulative_last.write(
-                    self._price1_cumulative_last.read() + _uq_div(_uq_encode(reserve0), reserve1).into() * time_elapsed.into()
-                );
+                self
+                    ._price0_cumulative_last
+                    .write(
+                        self._price0_cumulative_last.read()
+                            + _uq_div(_uq_encode(reserve1), reserve0).into() * time_elapsed.into()
+                    );
+                self
+                    ._price1_cumulative_last
+                    .write(
+                        self._price1_cumulative_last.read()
+                            + _uq_div(_uq_encode(reserve0), reserve1).into() * time_elapsed.into()
+                    );
             }
 
             self._reserve0.write(balance0);
@@ -207,15 +220,20 @@ mod Pair {
                 let val = u256_sqrt(amount0 * amount1).into() - MINIMUM_LIQUIDITY;
                 ERC20Internal::_mint(ref self.erc20, Zeroable::zero(), MINIMUM_LIQUIDITY);
                 val
-            }
-            else {
-                min((amount0 * total_supply) / reserve0.into(), (amount1 * total_supply) / reserve1.into())
+            } else {
+                min(
+                    (amount0 * total_supply) / reserve0.into(),
+                    (amount1 * total_supply) / reserve1.into()
+                )
             };
 
             assert(liquidity > 0, Errors::INSUFFICIENT_LIQUIDITY);
 
             ERC20Internal::_mint(ref self.erc20, to, liquidity);
-            self._update(balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1);
+            self
+                ._update(
+                    balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1
+                );
 
             if fee_on {
                 let reserve0 = self._reserve0.read();
@@ -246,7 +264,7 @@ mod Pair {
             let balance1 = self._token1.read().balance_of(this);
 
             let liquidity = self.erc20._balances.read(this);
-            
+
             let fee_on = self._mint_fee(reserve0, reserve1);
             let total_supply = self.erc20._total_supply.read();
 
@@ -256,15 +274,18 @@ mod Pair {
             assert(amount0 > 0 && amount1 > 0, Errors::INSUFFICIENT_LIQUIDITY);
 
             ERC20Internal::_burn(ref self.erc20, this, liquidity);
-            
+
             token0.transfer(to, amount0);
             token1.transfer(to, amount1);
 
             let balance0 = self._token0.read().balance_of(this);
             let balance1 = self._token1.read().balance_of(this);
 
-            self._update(balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1);
-            
+            self
+                ._update(
+                    balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1
+                );
+
             if fee_on {
                 let reserve0 = self._reserve0.read();
                 let reserve1 = self._reserve1.read();
@@ -279,7 +300,9 @@ mod Pair {
             (amount0, amount1)
         }
 
-        fn swap(ref self: ContractState, amount0_out: u256, amount1_out: u256, to: ContractAddress) {
+        fn swap(
+            ref self: ContractState, amount0_out: u256, amount1_out: u256, to: ContractAddress
+        ) {
             ReentrancyGuardInternal::_lock_start(ref self.reentrancy_guard);
 
             let this = get_contract_address();
@@ -288,12 +311,17 @@ mod Pair {
             let reserve1 = self._reserve1.read();
 
             assert(amount0_out > 0 || amount1_out > 0, Errors::INSUFFICIENT_OUTPUT);
-            assert(amount0_out < reserve0.into() && amount1_out < reserve1.into(), Errors::INSUFFICIENT_LIQUIDITY);
+            assert(
+                amount0_out < reserve0.into() && amount1_out < reserve1.into(),
+                Errors::INSUFFICIENT_LIQUIDITY
+            );
 
             let token0 = self._token0.read();
             let token1 = self._token1.read();
 
-            assert(to != token0.contract_address && to != token1.contract_address, Errors::INVALID_TO);
+            assert(
+                to != token0.contract_address && to != token1.contract_address, Errors::INVALID_TO
+            );
 
             if amount0_out > 0 {
                 token0.transfer(to, amount0_out);
@@ -308,15 +336,13 @@ mod Pair {
 
             let amount0_in = if balance0 > reserve0.into() - amount0_out {
                 balance0 - (reserve0.into() - amount0_out)
-            }
-            else {
+            } else {
                 0
             };
 
             let amount1_in = if balance1 > reserve1.into() - amount1_out {
                 balance1 - (reserve1.into() - amount1_out)
-            }
-            else {
+            } else {
                 0
             };
 
@@ -325,10 +351,29 @@ mod Pair {
             let balance0_adjusted = balance0 * 1000 - amount0_in * 3;
             let balance1_adjusted = balance1 * 1000 - amount1_in * 3;
 
-            assert(balance0_adjusted * balance1_adjusted >= reserve0.into() * reserve1.into() * 1000000, Errors::K);
+            assert(
+                balance0_adjusted
+                    * balance1_adjusted >= reserve0.into()
+                    * reserve1.into()
+                    * 1000000,
+                Errors::K
+            );
 
-            self._update(balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1);
-            self.emit(Swap { sender: get_caller_address(), amount0_in, amount1_in, amount0_out, amount1_out, to });
+            self
+                ._update(
+                    balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1
+                );
+            self
+                .emit(
+                    Swap {
+                        sender: get_caller_address(),
+                        amount0_in,
+                        amount1_in,
+                        amount0_out,
+                        amount1_out,
+                        to
+                    }
+                );
 
             ReentrancyGuardInternal::_lock_end(ref self.reentrancy_guard);
         }
@@ -364,7 +409,10 @@ mod Pair {
             let balance0 = self._token0.read().balance_of(this);
             let balance1 = self._token1.read().balance_of(this);
 
-            self._update(balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1);
+            self
+                ._update(
+                    balance0.try_into().unwrap(), balance1.try_into().unwrap(), reserve0, reserve1
+                );
 
             ReentrancyGuardInternal::_lock_end(ref self.reentrancy_guard);
         }

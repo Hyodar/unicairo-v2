@@ -1,4 +1,3 @@
-
 #[starknet::contract]
 mod Factory {
     use starknet::get_caller_address;
@@ -44,7 +43,9 @@ mod Factory {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, fee_to_setter: ContractAddress, pair_class_hash: ClassHash) {
+    fn constructor(
+        ref self: ContractState, fee_to_setter: ContractAddress, pair_class_hash: ClassHash
+    ) {
         self._fee_to_setter.write(fee_to_setter);
         self._pair_class_hash.write(pair_class_hash);
     }
@@ -59,7 +60,9 @@ mod Factory {
             self._fee_to_setter.read()
         }
 
-        fn get_pair(self: @ContractState, token_a: ContractAddress, token_b: ContractAddress) -> ContractAddress {
+        fn get_pair(
+            self: @ContractState, token_a: ContractAddress, token_b: ContractAddress
+        ) -> ContractAddress {
             self._pair_by_tokens.read((token_a, token_b))
         }
 
@@ -71,7 +74,9 @@ mod Factory {
             self._all_pairs_length.read()
         }
 
-        fn create_pair(ref self: ContractState, token_a: ContractAddress, token_b: ContractAddress) -> ContractAddress {
+        fn create_pair(
+            ref self: ContractState, token_a: ContractAddress, token_b: ContractAddress
+        ) -> ContractAddress {
             assert(token_a != token_b, Errors::IDENTICAL_ADDRESSES);
 
             let token_a_uint: u256 = contract_address_to_felt252(token_a).into();
@@ -79,13 +84,14 @@ mod Factory {
 
             let (token0, token1) = if token_a_uint < token_b_uint {
                 (token_a, token_b)
-            }
-            else {
+            } else {
                 (token_b, token_a)
             };
 
             assert(token0 != Zeroable::zero(), Errors::ZERO_ADDRESS);
-            assert(self._pair_by_tokens.read((token0, token1)) == Zeroable::zero(), Errors::PAIR_EXISTS);
+            assert(
+                self._pair_by_tokens.read((token0, token1)) == Zeroable::zero(), Errors::PAIR_EXISTS
+            );
 
             let mut salt_data = ArrayTrait::new();
 
@@ -94,11 +100,9 @@ mod Factory {
 
             let salt = poseidon_hash_span(salt_data.span());
             let (contract_address, _) = deploy_syscall(
-                self._pair_class_hash.read(),
-                salt,
-                ArrayTrait::new().span(),
-                false
-            ).unwrap();
+                self._pair_class_hash.read(), salt, ArrayTrait::new().span(), false
+            )
+                .unwrap();
 
             let pair = IPairDispatcher { contract_address };
             pair.initialize(token0, token1);
@@ -136,7 +140,10 @@ mod factory_tests {
     use super::Factory;
 
     use starknet::class_hash::Felt252TryIntoClassHash;
-    use starknet::{deploy_syscall, ContractAddress, ClassHash, get_caller_address, get_contract_address, contract_address_const};
+    use starknet::{
+        deploy_syscall, ContractAddress, ClassHash, get_caller_address, get_contract_address,
+        contract_address_const
+    };
     use starknet::testing::{set_caller_address, set_contract_address};
 
     fn deploy(fee_to_setter: ContractAddress, pair_class_hash: ClassHash) -> IFactoryDispatcher {
@@ -145,11 +152,9 @@ mod factory_tests {
         pair_class_hash.serialize(ref calldata);
 
         let (contract_address, _) = deploy_syscall(
-            Factory::TEST_CLASS_HASH.try_into().unwrap(),
-            0,
-            calldata.span(),
-            false,
-        ).unwrap();
+            Factory::TEST_CLASS_HASH.try_into().unwrap(), 0, calldata.span(), false,
+        )
+            .unwrap();
 
         IFactoryDispatcher { contract_address }
     }
