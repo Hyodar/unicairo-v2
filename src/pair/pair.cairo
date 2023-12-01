@@ -12,11 +12,11 @@ mod Pair {
     use integer::u256_sqrt;
     use cmp::min;
 
-    use uniswap_v2::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-    use uniswap_v2::pair::interface::IPair;
+    use unicairo_v2::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use unicairo_v2::pair::interface::IPair;
 
-    use uniswap_v2::erc20::erc20::erc20 as erc20_component;
-    use uniswap_v2::reentrancy_guard::reentrancy_guard::reentrancy_guard as reentrancy_guard_component;
+    use unicairo_v2::erc20::erc20::erc20 as erc20_component;
+    use unicairo_v2::reentrancy_guard::reentrancy_guard::reentrancy_guard as reentrancy_guard_component;
 
     component!(path: erc20_component, storage: erc20, event: ERC20Event);
     component!(path: reentrancy_guard_component, storage: reentrancy_guard, event: ReentrancyGuardEvent);
