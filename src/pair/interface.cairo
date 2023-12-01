@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-use uniswap_v2::erc20::interface::{IERC20, IERC20Dispatcher};
+use unicairo_v2::erc20::interface::{IERC20, IERC20Dispatcher};
 
 #[starknet::interface]
 trait IPair<TContractState> {

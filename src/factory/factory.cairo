@@ -7,8 +7,8 @@ mod Factory {
     use starknet::ContractAddress;
     use starknet::ClassHash;
     use poseidon::poseidon_hash_span;
-    use uniswap_v2::factory::interface::IFactory;
-    use uniswap_v2::pair::interface::{IPair, IPairDispatcher, IPairDispatcherTrait};
+    use unicairo_v2::factory::interface::IFactory;
+    use unicairo_v2::pair::interface::{IPair, IPairDispatcher, IPairDispatcherTrait};
 
     #[storage]
     struct Storage {
@@ -130,9 +130,9 @@ mod Factory {
 
 #[cfg(test)]
 mod factory_tests {
-    use uniswap_v2::pair::interface::{IPair, IPairDispatcher, IPairDispatcherTrait};
-    use uniswap_v2::pair::pair::Pair;
-    use uniswap_v2::factory::interface::{IFactory, IFactoryDispatcher, IFactoryDispatcherTrait};
+    use unicairo_v2::pair::interface::{IPair, IPairDispatcher, IPairDispatcherTrait};
+    use unicairo_v2::pair::pair::Pair;
+    use unicairo_v2::factory::interface::{IFactory, IFactoryDispatcher, IFactoryDispatcherTrait};
     use super::Factory;
 
     use starknet::class_hash::Felt252TryIntoClassHash;

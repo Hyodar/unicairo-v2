@@ -15,7 +15,7 @@ mod erc20 {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
 
-    use uniswap_v2::erc20::interface::IERC20;
+    use unicairo_v2::erc20::interface::IERC20;
 
     #[storage]
     struct Storage {
