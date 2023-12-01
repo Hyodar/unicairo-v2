@@ -1,13 +1,36 @@
-
 use starknet::ContractAddress;
 
 trait ERC20InternalTrait<TContractState> {
-    fn __erc20_initialize(ref self: erc20::ComponentState<TContractState>, name: felt252, symbol: felt252, decimals: u8);
-    fn _transfer(ref self: erc20::ComponentState<TContractState>, sender: ContractAddress, recipient: ContractAddress, amount: u256);
-    fn _approve(ref self: erc20::ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress, amount: u256);
-    fn _mint(ref self: erc20::ComponentState<TContractState>, recipient: ContractAddress, amount: u256);
-    fn _burn(ref self: erc20::ComponentState<TContractState>, account: ContractAddress, amount: u256);
-    fn _spend_allowance(ref self: erc20::ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress, added_value: u256);
+    fn __erc20_initialize(
+        ref self: erc20::ComponentState<TContractState>,
+        name: felt252,
+        symbol: felt252,
+        decimals: u8
+    );
+    fn _transfer(
+        ref self: erc20::ComponentState<TContractState>,
+        sender: ContractAddress,
+        recipient: ContractAddress,
+        amount: u256
+    );
+    fn _approve(
+        ref self: erc20::ComponentState<TContractState>,
+        owner: ContractAddress,
+        spender: ContractAddress,
+        amount: u256
+    );
+    fn _mint(
+        ref self: erc20::ComponentState<TContractState>, recipient: ContractAddress, amount: u256
+    );
+    fn _burn(
+        ref self: erc20::ComponentState<TContractState>, account: ContractAddress, amount: u256
+    );
+    fn _spend_allowance(
+        ref self: erc20::ComponentState<TContractState>,
+        owner: ContractAddress,
+        spender: ContractAddress,
+        added_value: u256
+    );
 }
 
 #[starknet::component]
@@ -61,24 +84,38 @@ mod erc20 {
         const MINT_TO_ZERO: felt252 = 'ERC20: mint to 0';
     }
 
-    impl ERC20InternalImpl<TContractState, +HasComponent<TContractState>> of super::ERC20InternalTrait<TContractState> {
-        fn __erc20_initialize(ref self: ComponentState<TContractState>, name: felt252, symbol: felt252, decimals: u8) {
+    impl ERC20InternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of super::ERC20InternalTrait<TContractState> {
+        fn __erc20_initialize(
+            ref self: ComponentState<TContractState>, name: felt252, symbol: felt252, decimals: u8
+        ) {
             self._name.write(name);
             self._symbol.write(symbol);
             self._decimals.write(decimals);
         }
 
-        fn _transfer(ref self: ComponentState<TContractState>, sender: ContractAddress, recipient: ContractAddress, amount: u256) {
+        fn _transfer(
+            ref self: ComponentState<TContractState>,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) {
             assert(!sender.is_zero(), Errors::TRANSFER_FROM_ZERO);
             assert(!recipient.is_zero(), Errors::TRANSFER_TO_ZERO);
-            
+
             self._balances.write(sender, self._balances.read(sender) - amount);
             self._balances.write(recipient, self._balances.read(recipient) + amount);
 
             self.emit(Transfer { from: sender, to: recipient, value: amount });
         }
 
-        fn _approve(ref self: ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress, amount: u256) {
+        fn _approve(
+            ref self: ComponentState<TContractState>,
+            owner: ContractAddress,
+            spender: ContractAddress,
+            amount: u256
+        ) {
             assert(!owner.is_zero(), Errors::APPROVE_FROM_ZERO);
             assert(!spender.is_zero(), Errors::APPROVE_TO_ZERO);
 
@@ -86,7 +123,9 @@ mod erc20 {
             self.emit(Approval { owner, spender, value: amount });
         }
 
-        fn _mint(ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256) {
+        fn _mint(
+            ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256
+        ) {
             assert(!recipient.is_zero(), Errors::MINT_TO_ZERO);
 
             self._total_supply.write(self._total_supply.read() + amount);
@@ -104,7 +143,12 @@ mod erc20 {
             self.emit(Transfer { from: account, to: Zeroable::zero(), value: amount });
         }
 
-        fn _spend_allowance(ref self: ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress, added_value: u256) {
+        fn _spend_allowance(
+            ref self: ComponentState<TContractState>,
+            owner: ContractAddress,
+            spender: ContractAddress,
+            added_value: u256
+        ) {
             let caller = get_caller_address();
 
             self._approve(caller, spender, self._allowances.read((caller, spender)) + added_value);
@@ -112,7 +156,9 @@ mod erc20 {
     }
 
     #[embeddable_as(ERC20Impl)]
-    impl ERC20<TContractState, +HasComponent<TContractState>> of IERC20<ComponentState<TContractState>> {
+    impl ERC20<
+        TContractState, +HasComponent<TContractState>
+    > of IERC20<ComponentState<TContractState>> {
         fn name(self: @ComponentState<TContractState>) -> felt252 {
             self._name.read()
         }
@@ -133,24 +179,35 @@ mod erc20 {
             self._balances.read(owner)
         }
 
-        fn allowance(self: @ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress) -> u256 {
+        fn allowance(
+            self: @ComponentState<TContractState>, owner: ContractAddress, spender: ContractAddress
+        ) -> u256 {
             self._allowances.read((owner, spender))
         }
 
-        fn transfer(ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256) -> bool {
+        fn transfer(
+            ref self: ComponentState<TContractState>, recipient: ContractAddress, amount: u256
+        ) -> bool {
             let sender = get_caller_address();
             self._transfer(sender, recipient, amount);
             true
         }
 
-        fn transfer_from(ref self: ComponentState<TContractState>, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool {
+        fn transfer_from(
+            ref self: ComponentState<TContractState>,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256
+        ) -> bool {
             let caller = get_caller_address();
             self._spend_allowance(sender, caller, amount);
             self._transfer(sender, recipient, amount);
             true
         }
 
-        fn approve(ref self: ComponentState<TContractState>, spender: ContractAddress, amount: u256) -> bool {
+        fn approve(
+            ref self: ComponentState<TContractState>, spender: ContractAddress, amount: u256
+        ) -> bool {
             let caller = get_caller_address();
             self._approve(caller, spender, amount);
             true

@@ -18,7 +18,9 @@ mod reentrancy_guard {
         const REENTRANT_CALL: felt252 = 'Reentrant call';
     }
 
-    impl ReentrancyGuardInternalImpl<TContractState, +HasComponent<TContractState>> of super::ReentrancyGuardInternal<TContractState> {
+    impl ReentrancyGuardInternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of super::ReentrancyGuardInternal<TContractState> {
         fn _lock_start(ref self: ComponentState<TContractState>) {
             assert(!self._lock.read(), Errors::REENTRANT_CALL);
             self._lock.write(true);
